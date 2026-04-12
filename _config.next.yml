@@ -45,4 +45,7 @@ reading_progress:
 local_search:
   enable: true
 
+motion:
+  enable: false
+
 highlight_theme: night eighties
