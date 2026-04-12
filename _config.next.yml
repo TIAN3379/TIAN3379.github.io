@@ -2,12 +2,15 @@ scheme: Muse
 
 darkmode: false
 
+sidebar:
+  display: always
+
 menu:
-  home: / || fa fa-home
-  archives: /archives/ || fa fa-archive
-  categories: /categories/ || fa fa-th
-  tags: /tags/ || fa fa-tags
-  about: /about/ || fa fa-user
+  home: / || fa fa-water
+  archives: /archives/ || fa fa-scroll
+  categories: /categories/ || fa fa-seedling
+  tags: /tags/ || fa fa-bookmark
+  about: /about/ || fa fa-feather-pointed
 
 footer:
   since: 2026
