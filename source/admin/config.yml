@@ -2,9 +2,10 @@ backend:
   name: github
   repo: TIAN3379/TIAN3379.github.io
   branch: main
-  use_graphql: true
+  use_graphql: false
   base_url: https://tian3379-decap-oauth.337953811.workers.dev
   auth_endpoint: /auth
+  api_root: https://tian3379-decap-oauth.337953811.workers.dev/api/github
 
 locale: zh_Hans
 site_url: https://TIAN3379.github.io

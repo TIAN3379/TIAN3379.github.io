@@ -19,6 +19,26 @@ function html(body, init = {}) {
   });
 }
 
+function withCors(request, response) {
+  const origin = request.headers.get("origin");
+  const headers = new Headers(response.headers);
+
+  headers.set("access-control-allow-methods", "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS");
+  headers.set("access-control-allow-headers", request.headers.get("access-control-request-headers") || "Authorization, Content-Type, Accept");
+  headers.set("access-control-max-age", "86400");
+  headers.append("vary", "Origin");
+
+  if (origin) {
+    headers.set("access-control-allow-origin", origin);
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
 function randomState() {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return [...bytes].map(b => b.toString(16).padStart(2, "0")).join("");
@@ -104,12 +124,45 @@ async function exchangeCodeForToken({ code, redirectUri, env }) {
   return data.access_token;
 }
 
+async function proxyGitHubApi(request) {
+  const url = new URL(request.url);
+  const upstreamPath = url.pathname.replace(/^\/api\/github/, "") || "/";
+  const upstreamUrl = new URL(`https://api.github.com${upstreamPath}`);
+  upstreamUrl.search = url.search;
+
+  const headers = new Headers(request.headers);
+  headers.set("host", "api.github.com");
+  headers.set("accept", headers.get("accept") || "application/vnd.github+json");
+  headers.set("user-agent", "tian3379-decap-oauth");
+
+  const init = {
+    method: request.method,
+    headers,
+    redirect: "manual"
+  };
+
+  if (!["GET", "HEAD"].includes(request.method)) {
+    init.body = await request.arrayBuffer();
+  }
+
+  const response = await fetch(upstreamUrl.toString(), init);
+  return withCors(request, response);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (request.method === "OPTIONS" && url.pathname.startsWith("/api/github")) {
+      return withCors(request, new Response(null, { status: 204 }));
+    }
+
     if (url.pathname === "/") {
       return html("<!doctype html><html><body style='font-family:system-ui;background:#0c1417;color:#e9eadf'><p>Decap OAuth worker is running.</p></body></html>");
+    }
+
+    if (url.pathname.startsWith("/api/github")) {
+      return proxyGitHubApi(request);
     }
 
     if (url.pathname === "/auth") {
