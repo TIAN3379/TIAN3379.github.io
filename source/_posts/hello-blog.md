@@ -14,6 +14,11 @@ description: 用于验证 Markdown、分类、标签、图片与 GitHub Actions 
   <img src="/images/jiangnan/post-cover.jpg" alt="夜泊水巷文章封面">
 </div>
 
+<div class="jiangnan-inscription">
+  <span class="jiangnan-inscription-label">试笔</span>
+  <p>用一篇文章校验这条从本地到 Pages 的水路。</p>
+</div>
+
 # 第一篇水巷测试文章
 
 这是博客的第一篇测试文章，用来验证内容结构、代码高亮、图片资源与自动部署链路是否都正常。
@@ -23,6 +28,8 @@ description: 用于验证 Markdown、分类、标签、图片与 GitHub Actions 
 - 支持 Markdown 写作
 - 支持标签与分类
 - 支持自动部署
+
+> 文章页面需要像一张压在木案上的纸，而不是普通的白色面板。
 
 ## C 代码示例
 
