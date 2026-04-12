@@ -94,22 +94,6 @@ layout: false
     <script>
       (() => {
         const OFFSET_ATTR = "data-cms-offset-applied";
-        const SITE_TEXT = "TIAN3379.github.io";
-
-        function normalizeText(value) {
-          return (value || "").replace(/\s+/g, "");
-        }
-
-        function getClickableText(el) {
-          if (!el) return "";
-          return normalizeText(el.textContent || el.innerText || "");
-        }
-
-        function findByExactText(root, text) {
-          const target = normalizeText(text);
-          return [...root.querySelectorAll("button, a, [role='button'], [role='tab'], [tabindex]")]
-            .find(el => getClickableText(el) === target) || null;
-        }
 
         function isTopOverlay(el) {
           const style = window.getComputedStyle(el);
@@ -119,114 +103,6 @@ layout: false
           if (rect.top > 4 || rect.height < 36 || rect.height > 180) return false;
           if (rect.width < window.innerWidth * 0.35) return false;
           return true;
-        }
-
-        function visibleOverlays() {
-          return [...document.body.querySelectorAll("*")].filter(isTopOverlay);
-        }
-
-        function findToolbarContainer(el) {
-          let current = el;
-          while (current && current !== document.body) {
-            const rect = current.getBoundingClientRect();
-            const style = window.getComputedStyle(current);
-            if (style.display !== "none" &&
-                rect.width > window.innerWidth * 0.35 &&
-                rect.height >= 40 &&
-                current.children.length >= 2) {
-              return current;
-            }
-            current = current.parentElement;
-          }
-          return el?.parentElement || null;
-        }
-
-        function findHostRow(primaryToolbar) {
-          const rows = [primaryToolbar, ...primaryToolbar.querySelectorAll("*")];
-          let best = null;
-          for (const row of rows) {
-            const rect = row.getBoundingClientRect();
-            const style = window.getComputedStyle(row);
-            if (style.display === "none") continue;
-            if (rect.width < window.innerWidth * 0.35 || rect.height < 28 || rect.height > 120) continue;
-            const text = normalizeText(row.textContent || "");
-            if (text.includes("已发布") || text.includes("删除内容")) {
-              best = row;
-              break;
-            }
-          }
-          return best || primaryToolbar;
-        }
-
-        function findMovableNode(el, stopAt) {
-          let current = el;
-          while (current && current !== stopAt && current.parentElement) {
-            const parent = current.parentElement;
-            if (parent === stopAt) return current;
-            if (parent.children.length > 1) return current;
-            current = parent;
-          }
-          return el;
-        }
-
-        function ensureHostWrap(hostRow) {
-          let wrap = hostRow.querySelector('[data-cms-host-wrap="true"]');
-          if (wrap) return wrap;
-          wrap = document.createElement("div");
-          wrap.setAttribute("data-cms-host-wrap", "true");
-          wrap.style.display = "flex";
-          wrap.style.alignItems = "center";
-          wrap.style.gap = "14px";
-          wrap.style.flexWrap = "wrap";
-          hostRow.appendChild(wrap);
-          return wrap;
-        }
-
-        function moveControlsIntoPrimaryRow(root) {
-          const published = findByExactText(root, "已发布");
-          if (!published) return;
-
-          const primaryToolbar = findToolbarContainer(published);
-          if (!primaryToolbar) return;
-
-          const hostRow = findHostRow(primaryToolbar);
-          const hostWrap = ensureHostWrap(hostRow);
-          hostRow.style.display = "flex";
-          hostRow.style.alignItems = "center";
-          hostRow.style.justifyContent = "space-between";
-          hostRow.style.gap = "16px";
-          hostRow.style.flexWrap = "wrap";
-
-          ["内容", "媒体", "快速新建"].forEach(label => {
-            const control = findByExactText(root, label);
-            if (!control) return;
-            const node = findMovableNode(control, control.closest("body"));
-            if (!node || hostWrap.contains(node) || hostRow.contains(node) && node !== control) return;
-            hostWrap.appendChild(node);
-          });
-        }
-
-        function hideSecondaryIdentity(root) {
-          const overlays = visibleOverlays();
-          overlays.forEach(overlay => {
-            const text = normalizeText(overlay.textContent || "");
-            if (!text.includes(normalizeText(SITE_TEXT))) return;
-            overlay.querySelectorAll("*").forEach(node => {
-              const nodeText = normalizeText(node.textContent || "");
-              if (nodeText.includes(normalizeText(SITE_TEXT))) {
-                const removable = findMovableNode(node, overlay) || node;
-                removable.style.display = "none";
-              }
-            });
-
-            overlay.querySelectorAll("img, svg").forEach(node => {
-              const rect = node.getBoundingClientRect();
-              if (rect.width >= 20 && rect.height >= 20) {
-                const removable = findMovableNode(node, overlay) || node;
-                removable.style.display = "none";
-              }
-            });
-          });
         }
 
         function findContentContainer(root, overlayBottom) {
@@ -260,10 +136,7 @@ layout: false
           const root = document.getElementById("nc-root");
           if (!root) return;
 
-          moveControlsIntoPrimaryRow(root);
-          hideSecondaryIdentity(root);
-
-          const overlays = visibleOverlays();
+          const overlays = [...document.body.querySelectorAll("*")].filter(isTopOverlay);
           if (!overlays.length) return;
 
           const overlayBottom = Math.max(...overlays.map(el => el.getBoundingClientRect().bottom));
