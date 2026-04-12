@@ -99,6 +99,9 @@ layout: false
         const LOGIN_CACHE_KEY = "cms-github-login";
         const AVATAR_ATTR = "data-github-avatar-applied";
         const AVATAR_IMG_ATTR = "data-github-avatar-img";
+        const MERGED_BAR_ATTR = "data-cms-merged-toolbar";
+        const MERGED_SLOT_ATTR = "data-cms-merged-slot";
+        const SECONDARY_BAR_ATTR = "data-cms-secondary-toolbar";
 
         function isTopOverlay(el) {
           const style = window.getComputedStyle(el);
@@ -192,6 +195,76 @@ layout: false
           });
         }
 
+        function getTopOverlays() {
+          return [...document.body.querySelectorAll("*")]
+            .filter(isTopOverlay)
+            .sort((a, b) => {
+              const rectA = a.getBoundingClientRect();
+              const rectB = b.getBoundingClientRect();
+              if (Math.abs(rectA.top - rectB.top) > 2) return rectA.top - rectB.top;
+              return rectB.width - rectA.width;
+            });
+        }
+
+        function mergeSecondaryToolbar() {
+          const overlays = getTopOverlays();
+          if (overlays.length < 2) return;
+
+          const primary = overlays[0];
+          const secondary = overlays.find(el => el !== primary && el.getBoundingClientRect().top >= primary.getBoundingClientRect().bottom - 4);
+          if (!secondary) return;
+          if (secondary.getAttribute(SECONDARY_BAR_ATTR) === "hidden") return;
+
+          let slot = primary.querySelector(`[${MERGED_SLOT_ATTR}]`);
+          if (!slot) {
+            slot = document.createElement("div");
+            slot.setAttribute(MERGED_SLOT_ATTR, "true");
+            slot.style.alignItems = "center";
+            slot.style.display = "flex";
+            slot.style.flex = "1 1 auto";
+            slot.style.flexWrap = "wrap";
+            slot.style.gap = "12px";
+            slot.style.justifyContent = "space-between";
+            slot.style.marginLeft = "16px";
+            slot.style.minWidth = "0";
+            primary.appendChild(slot);
+            primary.setAttribute(MERGED_BAR_ATTR, "true");
+          }
+
+          const fragment = document.createDocumentFragment();
+          [...secondary.childNodes].forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) return;
+            fragment.appendChild(node);
+          });
+
+          if (!fragment.childNodes.length) {
+            secondary.style.display = "none";
+            secondary.setAttribute(SECONDARY_BAR_ATTR, "hidden");
+            return;
+          }
+
+          const wrapper = document.createElement("div");
+          wrapper.style.alignItems = "center";
+          wrapper.style.display = "flex";
+          wrapper.style.flex = "1 1 auto";
+          wrapper.style.flexWrap = "wrap";
+          wrapper.style.gap = "12px";
+          wrapper.style.justifyContent = "space-between";
+          wrapper.style.minWidth = "0";
+          wrapper.appendChild(fragment);
+
+          slot.replaceChildren(wrapper);
+
+          primary.style.alignItems = "center";
+          primary.style.display = "flex";
+          primary.style.flexWrap = "wrap";
+
+          secondary.style.display = "none";
+          secondary.style.pointerEvents = "none";
+          secondary.style.visibility = "hidden";
+          secondary.setAttribute(SECONDARY_BAR_ATTR, "hidden");
+        }
+
         function applyGithubAvatar(profile) {
           if (!profile || !profile.avatarUrl) return;
 
@@ -229,7 +302,9 @@ layout: false
           const root = document.getElementById("nc-root");
           if (!root) return;
 
-          const overlays = [...document.body.querySelectorAll("*")].filter(isTopOverlay);
+          mergeSecondaryToolbar();
+
+          const overlays = getTopOverlays().filter(el => el.getAttribute(SECONDARY_BAR_ATTR) !== "hidden");
           if (!overlays.length) return;
 
           const overlayBottom = Math.max(...overlays.map(el => el.getBoundingClientRect().bottom));
