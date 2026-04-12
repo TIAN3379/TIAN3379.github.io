@@ -1,5 +1,5 @@
 ---
-title: Hello Blog
+title: 第一篇水巷测试文章
 date: 2026-04-12 20:30:00
 tags:
   - Hexo
@@ -7,16 +7,16 @@ tags:
 categories:
   - 开发
   - 博客搭建
-description: 第一篇测试文章，用于验证 Markdown、分类、标签和 GitHub Actions 自动部署流程。
+description: 用于验证 Markdown、分类、标签、图片与 GitHub Actions 自动部署流程的测试文章。
 ---
 
 <div class="post-page-cover">
   <img src="/images/jiangnan/post-cover.jpg" alt="夜泊水巷文章封面">
 </div>
 
-# Hello Blog
+# 第一篇水巷测试文章
 
-这是我的第一篇博客文章。
+这是博客的第一篇测试文章，用来验证内容结构、代码高亮、图片资源与自动部署链路是否都正常。
 
 ## Markdown 列表
 
