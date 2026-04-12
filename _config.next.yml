@@ -3,7 +3,7 @@ scheme: Muse
 darkmode: false
 
 sidebar:
-  display: always
+  display: post
 
 menu:
   home: / || fa fa-water
