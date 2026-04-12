@@ -11,6 +11,7 @@ menu:
   categories: /categories/ || fa fa-seedling
   tags: /tags/ || fa fa-bookmark
   about: /about/ || fa fa-feather-pointed
+  写作后台: /admin/ || fa fa-pen-nib
 
 footer:
   since: 2026
