@@ -10,6 +10,10 @@ categories:
 description: 第一篇测试文章，用于验证 Markdown、分类、标签和 GitHub Actions 自动部署流程。
 ---
 
+<div class="post-page-cover">
+  <img src="/images/jiangnan/post-cover.jpg" alt="夜泊水巷文章封面">
+</div>
+
 # Hello Blog
 
 这是我的第一篇博客文章。
