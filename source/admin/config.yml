@@ -3,10 +3,10 @@ backend:
   repo: TIAN3379/TIAN3379.github.io
   branch: main
   use_graphql: true
-  # GitHub Pages 站点若不用 Netlify，需要一个 OAuth 代理。
-  # 配好后取消下面两行注释，并替换成你的代理域名。
-  # base_url: https://your-oauth-proxy.example.com
-  # auth_endpoint: auth
+  # Cloudflare Workers 部署完成后，取消下面两行注释。
+  # workers.dev 免费子域名即可，不需要你自己购买域名。
+  # base_url: https://your-worker-name.your-subdomain.workers.dev
+  # auth_endpoint: /auth
 
 locale: zh_Hans
 site_url: https://TIAN3379.github.io
