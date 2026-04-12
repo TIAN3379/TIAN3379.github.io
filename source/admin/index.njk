@@ -102,6 +102,7 @@ layout: false
         const MERGED_BAR_ATTR = "data-cms-merged-toolbar";
         const MERGED_SLOT_ATTR = "data-cms-merged-slot";
         const SECONDARY_BAR_ATTR = "data-cms-secondary-toolbar";
+        const TABS_MOVED_ATTR = "data-cms-tabs-moved";
 
         function isTopOverlay(el) {
           const style = window.getComputedStyle(el);
@@ -265,6 +266,78 @@ layout: false
           secondary.setAttribute(SECONDARY_BAR_ATTR, "hidden");
         }
 
+        function findPrimaryEditorBar() {
+          return getTopOverlays().find(el => {
+            const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+            return /修改已保存|已发布|查看发布|删除内容/.test(text);
+          }) || null;
+        }
+
+        function findContentMediaTabs() {
+          const candidates = [...document.querySelectorAll("div, nav, section")].filter(el => {
+            if (el.getAttribute(TABS_MOVED_ATTR) === "true") return false;
+
+            const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+            if (!text.includes("内容") || !text.includes("媒体")) return false;
+
+            const rect = el.getBoundingClientRect();
+            if (rect.top < 0 || rect.top > 220) return false;
+            if (rect.height < 24 || rect.height > 100) return false;
+            if (rect.width < 120) return false;
+
+            const interactiveCount = el.querySelectorAll("button, a, [role='tab'], [role='button']").length;
+            return interactiveCount >= 2;
+          });
+
+          candidates.sort((a, b) => {
+            const rectA = a.getBoundingClientRect();
+            const rectB = b.getBoundingClientRect();
+            return rectA.height * rectA.width - rectB.height * rectB.width;
+          });
+
+          return candidates[0] || null;
+        }
+
+        function moveContentMediaTabs() {
+          const primary = findPrimaryEditorBar();
+          const tabs = findContentMediaTabs();
+          if (!primary || !tabs) return;
+          if (tabs.closest(`[${MERGED_SLOT_ATTR}]`)) return;
+
+          let slot = primary.querySelector(`[${MERGED_SLOT_ATTR}]`);
+          if (!slot) {
+            slot = document.createElement("div");
+            slot.setAttribute(MERGED_SLOT_ATTR, "true");
+            slot.style.alignItems = "center";
+            slot.style.display = "flex";
+            slot.style.flex = "1 1 auto";
+            slot.style.gap = "12px";
+            slot.style.marginLeft = "16px";
+            slot.style.minWidth = "0";
+            primary.appendChild(slot);
+          }
+
+          tabs.style.margin = "0";
+          tabs.style.maxWidth = "420px";
+          tabs.style.minWidth = "180px";
+          tabs.style.position = "static";
+          tabs.style.top = "auto";
+          tabs.style.zIndex = "auto";
+          tabs.setAttribute(TABS_MOVED_ATTR, "true");
+          slot.prepend(tabs);
+
+          const overlays = getTopOverlays();
+          overlays.forEach(el => {
+            if (el === primary) return;
+            if (!el.contains(tabs) && el.textContent && el.textContent.includes("内容") && el.textContent.includes("媒体")) {
+              el.style.display = "none";
+              el.style.pointerEvents = "none";
+              el.style.visibility = "hidden";
+              el.setAttribute(SECONDARY_BAR_ATTR, "hidden");
+            }
+          });
+        }
+
         function applyGithubAvatar(profile) {
           if (!profile || !profile.avatarUrl) return;
 
@@ -302,6 +375,7 @@ layout: false
           const root = document.getElementById("nc-root");
           if (!root) return;
 
+          moveContentMediaTabs();
           mergeSecondaryToolbar();
 
           const overlays = getTopOverlays().filter(el => el.getAttribute(SECONDARY_BAR_ATTR) !== "hidden");
