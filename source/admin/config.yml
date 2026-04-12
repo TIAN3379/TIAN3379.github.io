@@ -27,7 +27,7 @@ collections:
     slug: "{{slug}}"
     summary: "{{title}} · {{date}}"
     editor:
-      preview: true
+      preview: false
     fields:
       - { label: 标题, name: title, widget: string }
       - { label: 发布时间, name: date, widget: datetime, format: "YYYY-MM-DD HH:mm:ss" }
@@ -51,6 +51,8 @@ collections:
       - label: 关于我
         name: about
         file: source/about/index.md
+        editor:
+          preview: false
         fields:
           - { label: 标题, name: title, widget: string }
           - { label: 日期, name: date, widget: datetime, format: "YYYY-MM-DD HH:mm:ss" }
