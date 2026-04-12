@@ -91,6 +91,80 @@ layout: false
       }
     </style>
     <script defer src="https://unpkg.com/decap-cms@^3.10.1/dist/decap-cms.js"></script>
+    <script>
+      (() => {
+        const OFFSET_ATTR = "data-cms-offset-applied";
+
+        function isTopOverlay(el) {
+          const style = window.getComputedStyle(el);
+          const rect = el.getBoundingClientRect();
+          if (style.display === "none" || style.visibility === "hidden") return false;
+          if (!["fixed", "sticky"].includes(style.position)) return false;
+          if (rect.top > 4 || rect.height < 36 || rect.height > 180) return false;
+          if (rect.width < window.innerWidth * 0.35) return false;
+          return true;
+        }
+
+        function findContentContainer(root, overlayBottom) {
+          const direct = [...root.children];
+          const directCandidate = direct.find(el => {
+            const rect = el.getBoundingClientRect();
+            const style = window.getComputedStyle(el);
+            return style.display !== "none" &&
+              !["fixed", "sticky"].includes(style.position) &&
+              rect.height > window.innerHeight * 0.55 &&
+              rect.width > window.innerWidth * 0.45;
+          });
+          if (directCandidate) return directCandidate;
+
+          const all = [...root.querySelectorAll("*")];
+          const candidates = all.filter(el => {
+            const rect = el.getBoundingClientRect();
+            const style = window.getComputedStyle(el);
+            return style.display !== "none" &&
+              !["fixed", "sticky"].includes(style.position) &&
+              rect.top < overlayBottom + 12 &&
+              rect.height > window.innerHeight * 0.5 &&
+              rect.width > window.innerWidth * 0.45;
+          });
+
+          candidates.sort((a, b) => b.getBoundingClientRect().height - a.getBoundingClientRect().height);
+          return candidates[0] || null;
+        }
+
+        function applyCmsOffset() {
+          const root = document.getElementById("nc-root");
+          if (!root) return;
+
+          const overlays = [...root.querySelectorAll("*")].filter(isTopOverlay);
+          if (!overlays.length) return;
+
+          const overlayBottom = Math.max(...overlays.map(el => el.getBoundingClientRect().bottom));
+          const offset = Math.ceil(overlayBottom + 12);
+          const container = findContentContainer(root, overlayBottom);
+          if (!container) return;
+
+          if (container.getAttribute(OFFSET_ATTR) !== String(offset)) {
+            container.style.paddingTop = `${offset}px`;
+            container.setAttribute(OFFSET_ATTR, String(offset));
+          }
+        }
+
+        const observer = new MutationObserver(() => {
+          window.requestAnimationFrame(applyCmsOffset);
+        });
+
+        window.addEventListener("load", () => {
+          const root = document.getElementById("nc-root");
+          if (!root) return;
+          observer.observe(root, { childList: true, subtree: true, attributes: true });
+          applyCmsOffset();
+          window.addEventListener("resize", applyCmsOffset, { passive: true });
+          setTimeout(applyCmsOffset, 400);
+          setTimeout(applyCmsOffset, 1200);
+        });
+      })();
+    </script>
   </head>
   <body>
     <div class="cms-shell">
