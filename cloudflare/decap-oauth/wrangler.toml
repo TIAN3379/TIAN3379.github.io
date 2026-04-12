@@ -1,6 +1,6 @@
 name = "tian3379-decap-oauth"
 main = "src/index.js"
-compatibility_date = "2026-04-13"
+compatibility_date = "2026-04-12"
 workers_dev = true
 
 [observability]

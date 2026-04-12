@@ -3,10 +3,8 @@ backend:
   repo: TIAN3379/TIAN3379.github.io
   branch: main
   use_graphql: true
-  # Cloudflare Workers 部署完成后，取消下面两行注释。
-  # workers.dev 免费子域名即可，不需要你自己购买域名。
-  # base_url: https://your-worker-name.your-subdomain.workers.dev
-  # auth_endpoint: /auth
+  base_url: https://tian3379-decap-oauth.337953811.workers.dev
+  auth_endpoint: /auth
 
 locale: zh_Hans
 site_url: https://TIAN3379.github.io
