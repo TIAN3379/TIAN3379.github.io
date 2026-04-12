@@ -1,0 +1,107 @@
+---
+layout: false
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>江南字栈 | 内容管理</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top, rgba(111, 141, 135, 0.16), transparent 30%),
+          linear-gradient(180deg, #0c1417 0%, #132127 45%, #0c1316 100%);
+        color: #e9eadf;
+        font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+      }
+
+      .cms-shell {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-height: 100vh;
+      }
+
+      .cms-banner {
+        align-items: center;
+        backdrop-filter: blur(12px);
+        background: rgba(7, 13, 16, 0.72);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        padding: 14px 22px;
+      }
+
+      .cms-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .cms-seal {
+        background: linear-gradient(180deg, #932617, #6f1c13);
+        border: 1px solid rgba(255, 236, 218, 0.16);
+        border-radius: 10px;
+        color: #fff1e5;
+        font-size: 13px;
+        letter-spacing: 0.3em;
+        padding: 8px 10px 8px 14px;
+      }
+
+      .cms-title {
+        display: grid;
+        gap: 4px;
+      }
+
+      .cms-title strong {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+      }
+
+      .cms-title span {
+        color: rgba(233, 234, 223, 0.7);
+        font-size: 12px;
+        letter-spacing: 0.12em;
+      }
+
+      .cms-note {
+        color: rgba(233, 234, 223, 0.72);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+      }
+
+      #nc-root {
+        min-height: 0;
+      }
+    </style>
+    <script defer src="https://unpkg.com/decap-cms@^3.10.1/dist/decap-cms.js"></script>
+  </head>
+  <body>
+    <div class="cms-shell">
+      <header class="cms-banner">
+        <div class="cms-brand">
+          <span class="cms-seal">写作</span>
+          <div class="cms-title">
+            <strong>江南字栈内容后台</strong>
+            <span>文章、页面、封面图与图片上传入口</span>
+          </div>
+        </div>
+        <div class="cms-note">首次启用 GitHub 登录前，还需要完成 OAuth 配置。</div>
+      </header>
+      <div id="nc-root"></div>
+    </div>
+  </body>
+</html>
