@@ -7,537 +7,77 @@ layout: false
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <title>江南字栈 | 内容管理</title>
+    <title>Admin</title>
     <link rel="stylesheet" href="/admin/admin.css" />
-    <style>
-      :root {
-        color-scheme: dark;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background:
-          radial-gradient(circle at top, rgba(111, 141, 135, 0.16), transparent 30%),
-          linear-gradient(180deg, #0c1417 0%, #132127 45%, #0c1316 100%);
-        color: #e9eadf;
-        font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-        overflow: hidden;
-      }
-
-      .cms-shell {
-        display: grid;
-        grid-template-rows: auto 1fr;
-        min-height: 100vh;
-      }
-
-      .cms-banner {
-        align-items: center;
-        backdrop-filter: blur(12px);
-        background: rgba(7, 13, 16, 0.72);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        display: flex;
-        gap: 16px;
-        justify-content: space-between;
-        padding: 14px 22px;
-      }
-
-      .cms-brand {
-        align-items: center;
-        display: flex;
-        gap: 14px;
-      }
-
-      .cms-seal {
-        background: linear-gradient(180deg, #932617, #6f1c13);
-        border: 1px solid rgba(255, 236, 218, 0.16);
-        border-radius: 10px;
-        color: #fff1e5;
-        font-size: 13px;
-        letter-spacing: 0.3em;
-        padding: 8px 10px 8px 14px;
-      }
-
-      .cms-title {
-        display: grid;
-        gap: 4px;
-      }
-
-      .cms-title strong {
-        font-size: 16px;
-        font-weight: 600;
-        letter-spacing: 0.18em;
-      }
-
-      .cms-title span {
-        color: rgba(233, 234, 223, 0.7);
-        font-size: 12px;
-        letter-spacing: 0.12em;
-      }
-
-      .cms-note {
-        color: rgba(233, 234, 223, 0.72);
-        font-size: 12px;
-        letter-spacing: 0.06em;
-      }
-
-      #nc-root {
-        min-height: 0;
-        overflow: auto;
-      }
-    </style>
     <script defer src="https://unpkg.com/decap-cms@^3.10.1/dist/decap-cms.js"></script>
     <script>
       (() => {
-        const ROOT_OFFSET_ATTR = "data-cms-root-offset-applied";
-        const GITHUB_API_ROOT = "https://tian3379-decap-oauth.337953811.workers.dev/api/github";
-        const AVATAR_CACHE_KEY = "cms-github-avatar-url";
-        const LOGIN_CACHE_KEY = "cms-github-login";
-        const AVATAR_ATTR = "data-github-avatar-applied";
-        const AVATAR_IMG_ATTR = "data-github-avatar-img";
-        const MERGED_BAR_ATTR = "data-cms-merged-toolbar";
-        const MERGED_SLOT_ATTR = "data-cms-merged-slot";
-        const SECONDARY_BAR_ATTR = "data-cms-secondary-toolbar";
-        const TABS_MOVED_ATTR = "data-cms-tabs-moved";
-        const TABS_SOURCE_ATTR = "data-cms-tabs-source";
-        const DECAP_SECONDARY_HEADER_SELECTOR = "header.css-8zenuf-AppHeader-css";
-        const DECAP_SECONDARY_CONTENT_SELECTOR = ".css-y5bbau-AppHeaderContent.e1rbzf6g5";
+        const CANDIDATE_SELECTORS = [
+          "header",
+          "nav",
+          "[class*='AppHeader']",
+          "[class*='Toolbar']",
+          "[class*='CollectionTop']",
+          "[class*='EditorToolbar']"
+        ];
 
-        function isTopOverlay(el) {
-          const style = window.getComputedStyle(el);
-          const rect = el.getBoundingClientRect();
-          if (style.display === "none" || style.visibility === "hidden") return false;
-          if (!["fixed", "sticky"].includes(style.position)) return false;
-          if (rect.top > 4 || rect.height < 36 || rect.height > 180) return false;
-          if (rect.width < window.innerWidth * 0.35) return false;
-          return true;
+        function flattenToolbar(el) {
+          el.style.position = "static";
+          el.style.top = "auto";
+          el.style.left = "auto";
+          el.style.right = "auto";
+          el.style.bottom = "auto";
+          el.style.zIndex = "auto";
+          el.style.transform = "none";
+          el.style.boxShadow = "none";
+          el.style.width = "auto";
+          el.style.maxWidth = "none";
         }
 
-        function getStoredCmsUser() {
-          const candidateKeys = ["decap-cms-user", "netlify-cms-user"];
-          const storages = [window.localStorage, window.sessionStorage];
-
-          for (const storage of storages) {
-            for (const key of candidateKeys) {
-              try {
-                const value = storage.getItem(key);
-                if (!value) continue;
-                const parsed = JSON.parse(value);
-                if (parsed && typeof parsed === "object") return parsed;
-              } catch {}
-            }
-          }
-
-          return null;
-        }
-
-        function getGithubToken() {
-          const user = getStoredCmsUser();
-          if (!user || typeof user !== "object") return null;
-          return user.token || user.access_token || user.github_token || user.jwt || null;
-        }
-
-        async function getGithubProfile() {
-          const cachedAvatar = window.sessionStorage.getItem(AVATAR_CACHE_KEY);
-          const cachedLogin = window.sessionStorage.getItem(LOGIN_CACHE_KEY);
-
-          if (cachedAvatar) {
-            return { avatarUrl: cachedAvatar, login: cachedLogin || "GitHub" };
-          }
-
-          const token = getGithubToken();
-          if (!token) return null;
-
-          try {
-            const response = await fetch(`${GITHUB_API_ROOT}/user`, {
-              headers: {
-                Accept: "application/vnd.github+json",
-                Authorization: `token ${token}`
-              }
-            });
-
-            if (!response.ok) return null;
-
-            const user = await response.json();
-            if (!user || !user.avatar_url) return null;
-
-            window.sessionStorage.setItem(AVATAR_CACHE_KEY, user.avatar_url);
-            if (user.login) {
-              window.sessionStorage.setItem(LOGIN_CACHE_KEY, user.login);
-            }
-
-            return {
-              avatarUrl: user.avatar_url,
-              login: user.login || "GitHub"
-            };
-          } catch {
-            return null;
-          }
-        }
-
-        function findAvatarAnchors() {
-          const rightEdge = window.innerWidth;
-          return [...document.querySelectorAll("button, a, [role='button']")].filter(el => {
-            if (el.getAttribute(AVATAR_ATTR) === "true") return false;
-
-            const rect = el.getBoundingClientRect();
-            if (rect.top < -4 || rect.top > 180) return false;
-            if (rect.left < rightEdge - 320 || rect.right > rightEdge - 4) return false;
-            if (rect.width < 28 || rect.width > 64 || rect.height < 28 || rect.height > 64) return false;
-
-            const hasSvg = !!el.querySelector("svg");
-            const hasImg = !!el.querySelector("img");
-            const aria = (el.getAttribute("aria-label") || "").toLowerCase();
-            const text = (el.textContent || "").trim();
-            const looksLikeProfile = /avatar|profile|user|account/.test(aria) || (hasSvg && text.length <= 2);
-
-            return hasSvg || (hasImg && looksLikeProfile) || looksLikeProfile;
-          });
-        }
-
-        function getTopOverlays() {
-          return [...document.body.querySelectorAll("*")]
-            .filter(isTopOverlay)
-            .sort((a, b) => {
-              const rectA = a.getBoundingClientRect();
-              const rectB = b.getBoundingClientRect();
-              if (Math.abs(rectA.top - rectB.top) > 2) return rectA.top - rectB.top;
-              return rectB.width - rectA.width;
-            });
-        }
-
-        function mergeSecondaryToolbar() {
-          const overlays = getTopOverlays();
-          if (overlays.length < 2) return;
-
-          const primary = overlays[0];
-          const secondary = overlays.find(el => el !== primary && el.getBoundingClientRect().top >= primary.getBoundingClientRect().bottom - 4);
-          if (!secondary) return;
-          if (secondary.getAttribute(SECONDARY_BAR_ATTR) === "hidden") return;
-
-          let slot = primary.querySelector(`[${MERGED_SLOT_ATTR}]`);
-          if (!slot) {
-            slot = document.createElement("div");
-            slot.setAttribute(MERGED_SLOT_ATTR, "true");
-            slot.style.alignItems = "center";
-            slot.style.display = "flex";
-            slot.style.flex = "1 1 auto";
-            slot.style.flexWrap = "wrap";
-            slot.style.gap = "12px";
-            slot.style.justifyContent = "space-between";
-            slot.style.marginLeft = "16px";
-            slot.style.minWidth = "0";
-            primary.appendChild(slot);
-            primary.setAttribute(MERGED_BAR_ATTR, "true");
-          }
-
-          const fragment = document.createDocumentFragment();
-          [...secondary.childNodes].forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) return;
-            fragment.appendChild(node);
-          });
-
-          if (!fragment.childNodes.length) {
-            secondary.style.display = "none";
-            secondary.setAttribute(SECONDARY_BAR_ATTR, "hidden");
-            return;
-          }
-
-          const wrapper = document.createElement("div");
-          wrapper.style.alignItems = "center";
-          wrapper.style.display = "flex";
-          wrapper.style.flex = "1 1 auto";
-          wrapper.style.flexWrap = "wrap";
-          wrapper.style.gap = "12px";
-          wrapper.style.justifyContent = "space-between";
-          wrapper.style.minWidth = "0";
-          wrapper.appendChild(fragment);
-
-          slot.replaceChildren(wrapper);
-
-          primary.style.alignItems = "center";
-          primary.style.display = "flex";
-          primary.style.flexWrap = "wrap";
-
-          secondary.style.display = "none";
-          secondary.style.pointerEvents = "none";
-          secondary.style.visibility = "hidden";
-          secondary.setAttribute(SECONDARY_BAR_ATTR, "hidden");
-        }
-
-        function findPrimaryEditorBar() {
-          return getTopOverlays().find(el => {
-            const text = (el.textContent || "").replace(/\s+/g, " ").trim();
-            return /修改已保存|已发布|查看发布|删除内容/.test(text);
-          }) || null;
-        }
-
-        function createMergedSlot(primary) {
-          let slot = primary.querySelector(`[${MERGED_SLOT_ATTR}]`);
-          if (slot) return slot;
-
-          slot = document.createElement("div");
-          slot.setAttribute(MERGED_SLOT_ATTR, "true");
-          slot.style.alignItems = "center";
-          slot.style.display = "flex";
-          slot.style.flex = "1 1 auto";
-          slot.style.flexWrap = "wrap";
-          slot.style.gap = "12px";
-          slot.style.justifyContent = "space-between";
-          slot.style.marginLeft = "16px";
-          slot.style.minWidth = "0";
-          primary.appendChild(slot);
-          primary.setAttribute(MERGED_BAR_ATTR, "true");
-          return slot;
-        }
-
-        function hardMergeDecapSecondaryHeader() {
-          const primary = findPrimaryEditorBar();
-          const secondaryHeader = document.querySelector(DECAP_SECONDARY_HEADER_SELECTOR);
-          const secondaryContent = document.querySelector(DECAP_SECONDARY_CONTENT_SELECTOR);
-          if (!primary || !secondaryHeader || !secondaryContent) return false;
-          if (secondaryContent.closest(`[${MERGED_SLOT_ATTR}]`)) return true;
-
-          const slot = createMergedSlot(primary);
-          const wrapper = document.createElement("div");
-          wrapper.style.alignItems = "center";
-          wrapper.style.display = "flex";
-          wrapper.style.flex = "1 1 auto";
-          wrapper.style.flexWrap = "wrap";
-          wrapper.style.gap = "12px";
-          wrapper.style.justifyContent = "space-between";
-          wrapper.style.minWidth = "0";
-
-          [...secondaryContent.childNodes].forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) return;
-            wrapper.appendChild(node);
-          });
-
-          if (!wrapper.childNodes.length) return false;
-
-          wrapper.setAttribute(TABS_MOVED_ATTR, "true");
-          slot.replaceChildren(wrapper);
-
-          primary.style.alignItems = "center";
-          primary.style.display = "flex";
-          primary.style.flexWrap = "wrap";
-
-          secondaryHeader.style.display = "none";
-          secondaryHeader.style.height = "0";
-          secondaryHeader.style.minHeight = "0";
-          secondaryHeader.style.margin = "0";
-          secondaryHeader.style.padding = "0";
-          secondaryHeader.style.border = "0";
-          secondaryHeader.style.pointerEvents = "none";
-          secondaryHeader.style.visibility = "hidden";
-          secondaryHeader.setAttribute(SECONDARY_BAR_ATTR, "hidden");
-          return true;
-        }
-
-        function getTabLikeNodes() {
-          return [...document.querySelectorAll("button, a, [role='tab'], [role='button']")]
-            .filter(el => {
-              const text = (el.textContent || "").replace(/\s+/g, " ").trim();
-              return text === "内容" || text === "媒体";
-            });
-        }
-
-        function getCommonAncestor(elements) {
-          if (!elements.length) return null;
-
-          const chains = elements.map(el => {
-            const chain = [];
-            let current = el;
-            while (current && current !== document.body) {
-              chain.push(current);
-              current = current.parentElement;
-            }
-            return chain;
-          });
-
-          const [first, ...rest] = chains;
-          return first.find(candidate => rest.every(chain => chain.includes(candidate))) || null;
-        }
-
-        function expandTabsContainer(container) {
-          let current = container;
-
-          for (let i = 0; i < 4; i += 1) {
-            if (!current || !current.parentElement) break;
-            const rect = current.getBoundingClientRect();
-            const parentRect = current.parentElement.getBoundingClientRect();
-            const currentText = (current.textContent || "").replace(/\s+/g, " ").trim();
-            const parentText = (current.parentElement.textContent || "").replace(/\s+/g, " ").trim();
-            const parentHasTabs = parentText.includes("内容") && parentText.includes("媒体");
-            const closeInSize = Math.abs(parentRect.height - rect.height) < 48;
-            const nearTop = parentRect.top >= 0 && parentRect.top <= 220;
-
-            if (!parentHasTabs || !nearTop || !closeInSize) break;
-            if (parentText.length > currentText.length + 60) break;
-            current = current.parentElement;
-          }
-
-          return current;
-        }
-
-        function findContentMediaTabs() {
-          const tabs = getTabLikeNodes();
-          if (tabs.length < 2) return null;
-
-          const container = getCommonAncestor(tabs);
-          if (!container) return null;
-
-          const expanded = expandTabsContainer(container);
-          const rect = expanded.getBoundingClientRect();
-          if (rect.top < 0 || rect.top > 220 || rect.height > 120) return null;
-
-          return expanded;
-        }
-
-        function neutralizeSecondaryTabsBar(container) {
-          if (!container) return;
-
-          let current = container;
-          for (let i = 0; i < 4 && current; i += 1) {
-            const rect = current.getBoundingClientRect();
-            const text = (current.textContent || "").replace(/\s+/g, " ").trim();
-            const looksLikeBar = text.includes("内容") && text.includes("媒体") && rect.top >= 0 && rect.top <= 220;
-
-            if (looksLikeBar) {
-              current.style.position = "static";
-              current.style.top = "auto";
-              current.style.left = "auto";
-              current.style.right = "auto";
-              current.style.zIndex = "auto";
-              current.style.transform = "none";
-              current.style.width = "auto";
-              current.style.boxShadow = "none";
-              current.style.pointerEvents = "none";
-              current.style.visibility = "hidden";
-              current.style.height = "0";
-              current.style.minHeight = "0";
-              current.style.margin = "0";
-              current.style.padding = "0";
-              current.style.border = "0";
-              current.setAttribute(SECONDARY_BAR_ATTR, "hidden");
-              return;
-            }
-
-            current = current.parentElement;
-          }
-        }
-
-        function moveContentMediaTabs() {
-          if (hardMergeDecapSecondaryHeader()) return;
-
-          const primary = findPrimaryEditorBar();
-          const tabs = findContentMediaTabs();
-          if (!primary || !tabs) return;
-          if (tabs.closest(`[${MERGED_SLOT_ATTR}]`)) return;
-
-          const slot = createMergedSlot(primary);
-
-          tabs.style.margin = "0";
-          tabs.style.maxWidth = "420px";
-          tabs.style.minWidth = "180px";
-          tabs.style.position = "static";
-          tabs.style.top = "auto";
-          tabs.style.zIndex = "auto";
-          tabs.style.pointerEvents = "auto";
-          tabs.setAttribute(TABS_MOVED_ATTR, "true");
-          tabs.setAttribute(TABS_SOURCE_ATTR, "moved");
-          slot.prepend(tabs);
-          neutralizeSecondaryTabsBar(tabs);
-        }
-
-        function applyGithubAvatar(profile) {
-          if (!profile || !profile.avatarUrl) return;
-
-          findAvatarAnchors().forEach(el => {
-            const rect = el.getBoundingClientRect();
-            const img = document.createElement("img");
-            img.src = profile.avatarUrl;
-            img.alt = `${profile.login} avatar`;
-            img.referrerPolicy = "no-referrer";
-            img.setAttribute(AVATAR_IMG_ATTR, "true");
-
-            const existingSvg = el.querySelector("svg");
-            const existingImg = el.querySelector(`img[${AVATAR_IMG_ATTR}]`);
-            if (existingImg) return;
-
-            if (existingSvg) {
-              existingSvg.style.display = "none";
-            }
-
-            el.style.alignItems = "center";
-            el.style.borderRadius = "999px";
-            el.style.display = "inline-flex";
-            el.style.justifyContent = "center";
-            el.style.overflow = "hidden";
-            el.style.padding = "0";
-            el.style.width = `${Math.round(rect.width)}px`;
-            el.style.height = `${Math.round(rect.height)}px`;
-            el.setAttribute("title", profile.login);
-            el.setAttribute(AVATAR_ATTR, "true");
-            el.appendChild(img);
-          });
-        }
-
-        function applyCmsOffset() {
+        function normalizeCmsLayout() {
           const root = document.getElementById("nc-root");
           if (!root) return;
 
-          const overlays = getTopOverlays().filter(el => el.getAttribute(SECONDARY_BAR_ATTR) !== "hidden");
-          if (!overlays.length) return;
+          root.style.paddingTop = "0";
+          root.style.scrollPaddingTop = "0";
 
-          const overlayBottom = Math.max(...overlays.map(el => el.getBoundingClientRect().bottom));
-          const offset = Math.ceil(overlayBottom + 12);
+          const candidates = [...new Set(
+            CANDIDATE_SELECTORS.flatMap(selector => [...root.querySelectorAll(selector)])
+          )];
 
-          if (root.getAttribute(ROOT_OFFSET_ATTR) !== String(offset)) {
-            root.style.paddingTop = `${offset}px`;
-            root.style.scrollPaddingTop = `${offset}px`;
-            root.setAttribute(ROOT_OFFSET_ATTR, String(offset));
-          }
+          candidates.forEach(el => {
+            const style = window.getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            if (!["fixed", "sticky"].includes(style.position)) return;
+            if (rect.top > 180 || rect.height < 28 || rect.height > 120) return;
+            if (rect.width < window.innerWidth * 0.25) return;
+            flattenToolbar(el);
+          });
         }
 
         const observer = new MutationObserver(() => {
-          window.requestAnimationFrame(() => {
-            applyCmsOffset();
-            getGithubProfile().then(applyGithubAvatar);
-          });
+          window.requestAnimationFrame(normalizeCmsLayout);
         });
 
         window.addEventListener("load", () => {
           const root = document.getElementById("nc-root");
           if (!root) return;
           observer.observe(root, { childList: true, subtree: true, attributes: true });
-          applyCmsOffset();
-          getGithubProfile().then(applyGithubAvatar);
-          window.addEventListener("resize", applyCmsOffset, { passive: true });
-          setTimeout(applyCmsOffset, 400);
-          setTimeout(applyCmsOffset, 1200);
-          setTimeout(() => getGithubProfile().then(applyGithubAvatar), 800);
-          setTimeout(() => getGithubProfile().then(applyGithubAvatar), 1600);
+          normalizeCmsLayout();
+          window.addEventListener("resize", normalizeCmsLayout, { passive: true });
+          setTimeout(normalizeCmsLayout, 300);
+          setTimeout(normalizeCmsLayout, 1200);
+          setTimeout(normalizeCmsLayout, 2400);
         });
       })();
     </script>
   </head>
   <body>
-    <div class="cms-shell">
-      <header class="cms-banner">
-        <div class="cms-brand">
-          <span class="cms-seal">写作</span>
-          <div class="cms-title">
-            <strong>江南字栈内容后台</strong>
-            <span>文章、页面、封面图与图片上传入口</span>
-          </div>
-        </div>
-        <div class="cms-note">登录后可直接在浏览器中写作并发布。</div>
-      </header>
+    <div class="admin-shell">
+      <div class="admin-head">
+        <strong>Admin</strong>
+        <span>Stable editor mode</span>
+      </div>
       <div id="nc-root"></div>
     </div>
   </body>

@@ -1,12 +1,41 @@
 html,
 body {
   height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(120, 150, 143, 0.12), transparent 28%),
+    linear-gradient(180deg, #eef3f1 0%, #e8efec 100%);
+  color: #1f2a2f;
+  font-family: "Noto Serif SC", "Source Han Serif SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.admin-shell {
+  min-height: 100%;
+}
+
+.admin-head {
+  align-items: baseline;
+  display: flex;
+  gap: 12px;
+  padding: 14px 20px;
+}
+
+.admin-head strong {
+  color: #22353b;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.admin-head span {
+  color: #5c6f76;
+  font-size: 13px;
 }
 
 #nc-root {
-  background:
-    radial-gradient(circle at top, rgba(120, 150, 143, 0.08), transparent 32%),
-    linear-gradient(180deg, rgba(8, 14, 16, 0.22), rgba(8, 14, 16, 0));
+  min-height: calc(100vh - 52px);
 }
 
 #nc-root * {
@@ -17,12 +46,7 @@ body {
 #nc-root input,
 #nc-root select,
 #nc-root textarea {
-  border-radius: 12px !important;
-}
-
-#nc-root input,
-#nc-root select,
-#nc-root textarea {
+  border-radius: 10px !important;
   box-shadow: none !important;
 }
 
@@ -31,27 +55,13 @@ body {
 }
 
 #nc-root img {
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
-#nc-root [data-github-avatar-img] {
-  border-radius: 999px;
-  box-shadow: 0 6px 18px rgba(12, 20, 23, 0.18);
-  display: block;
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
-}
-
-#nc-root header.css-8zenuf-AppHeader-css {
+#nc-root header.css-8zenuf-AppHeader-css,
+#nc-root .css-y5bbau-AppHeaderContent.e1rbzf6g5 {
   position: static !important;
   top: auto !important;
   z-index: auto !important;
-  background: rgba(255, 255, 255, 0.96) !important;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
   box-shadow: none !important;
-}
-
-#nc-root .css-y5bbau-AppHeaderContent.e1rbzf6g5 {
-  min-height: 48px !important;
 }
