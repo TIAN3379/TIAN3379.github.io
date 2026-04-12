@@ -104,6 +104,8 @@ layout: false
         const SECONDARY_BAR_ATTR = "data-cms-secondary-toolbar";
         const TABS_MOVED_ATTR = "data-cms-tabs-moved";
         const TABS_SOURCE_ATTR = "data-cms-tabs-source";
+        const DECAP_SECONDARY_HEADER_SELECTOR = "header.css-8zenuf-AppHeader-css";
+        const DECAP_SECONDARY_CONTENT_SELECTOR = ".css-y5bbau-AppHeaderContent.e1rbzf6g5";
 
         function isTopOverlay(el) {
           const style = window.getComputedStyle(el);
@@ -274,6 +276,68 @@ layout: false
           }) || null;
         }
 
+        function createMergedSlot(primary) {
+          let slot = primary.querySelector(`[${MERGED_SLOT_ATTR}]`);
+          if (slot) return slot;
+
+          slot = document.createElement("div");
+          slot.setAttribute(MERGED_SLOT_ATTR, "true");
+          slot.style.alignItems = "center";
+          slot.style.display = "flex";
+          slot.style.flex = "1 1 auto";
+          slot.style.flexWrap = "wrap";
+          slot.style.gap = "12px";
+          slot.style.justifyContent = "space-between";
+          slot.style.marginLeft = "16px";
+          slot.style.minWidth = "0";
+          primary.appendChild(slot);
+          primary.setAttribute(MERGED_BAR_ATTR, "true");
+          return slot;
+        }
+
+        function hardMergeDecapSecondaryHeader() {
+          const primary = findPrimaryEditorBar();
+          const secondaryHeader = document.querySelector(DECAP_SECONDARY_HEADER_SELECTOR);
+          const secondaryContent = document.querySelector(DECAP_SECONDARY_CONTENT_SELECTOR);
+          if (!primary || !secondaryHeader || !secondaryContent) return false;
+          if (secondaryContent.closest(`[${MERGED_SLOT_ATTR}]`)) return true;
+
+          const slot = createMergedSlot(primary);
+          const wrapper = document.createElement("div");
+          wrapper.style.alignItems = "center";
+          wrapper.style.display = "flex";
+          wrapper.style.flex = "1 1 auto";
+          wrapper.style.flexWrap = "wrap";
+          wrapper.style.gap = "12px";
+          wrapper.style.justifyContent = "space-between";
+          wrapper.style.minWidth = "0";
+
+          [...secondaryContent.childNodes].forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) return;
+            wrapper.appendChild(node);
+          });
+
+          if (!wrapper.childNodes.length) return false;
+
+          wrapper.setAttribute(TABS_MOVED_ATTR, "true");
+          slot.replaceChildren(wrapper);
+
+          primary.style.alignItems = "center";
+          primary.style.display = "flex";
+          primary.style.flexWrap = "wrap";
+
+          secondaryHeader.style.display = "none";
+          secondaryHeader.style.height = "0";
+          secondaryHeader.style.minHeight = "0";
+          secondaryHeader.style.margin = "0";
+          secondaryHeader.style.padding = "0";
+          secondaryHeader.style.border = "0";
+          secondaryHeader.style.pointerEvents = "none";
+          secondaryHeader.style.visibility = "hidden";
+          secondaryHeader.setAttribute(SECONDARY_BAR_ATTR, "hidden");
+          return true;
+        }
+
         function getTabLikeNodes() {
           return [...document.querySelectorAll("button, a, [role='tab'], [role='button']")]
             .filter(el => {
@@ -368,23 +432,14 @@ layout: false
         }
 
         function moveContentMediaTabs() {
+          if (hardMergeDecapSecondaryHeader()) return;
+
           const primary = findPrimaryEditorBar();
           const tabs = findContentMediaTabs();
           if (!primary || !tabs) return;
           if (tabs.closest(`[${MERGED_SLOT_ATTR}]`)) return;
 
-          let slot = primary.querySelector(`[${MERGED_SLOT_ATTR}]`);
-          if (!slot) {
-            slot = document.createElement("div");
-            slot.setAttribute(MERGED_SLOT_ATTR, "true");
-            slot.style.alignItems = "center";
-            slot.style.display = "flex";
-            slot.style.flex = "1 1 auto";
-            slot.style.gap = "12px";
-            slot.style.marginLeft = "16px";
-            slot.style.minWidth = "0";
-            primary.appendChild(slot);
-          }
+          const slot = createMergedSlot(primary);
 
           tabs.style.margin = "0";
           tabs.style.maxWidth = "420px";
