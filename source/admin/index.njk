@@ -103,6 +103,7 @@ layout: false
         const MERGED_SLOT_ATTR = "data-cms-merged-slot";
         const SECONDARY_BAR_ATTR = "data-cms-secondary-toolbar";
         const TABS_MOVED_ATTR = "data-cms-tabs-moved";
+        const TABS_SOURCE_ATTR = "data-cms-tabs-source";
 
         function isTopOverlay(el) {
           const style = window.getComputedStyle(el);
@@ -273,29 +274,97 @@ layout: false
           }) || null;
         }
 
+        function getTabLikeNodes() {
+          return [...document.querySelectorAll("button, a, [role='tab'], [role='button']")]
+            .filter(el => {
+              const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+              return text === "内容" || text === "媒体";
+            });
+        }
+
+        function getCommonAncestor(elements) {
+          if (!elements.length) return null;
+
+          const chains = elements.map(el => {
+            const chain = [];
+            let current = el;
+            while (current && current !== document.body) {
+              chain.push(current);
+              current = current.parentElement;
+            }
+            return chain;
+          });
+
+          const [first, ...rest] = chains;
+          return first.find(candidate => rest.every(chain => chain.includes(candidate))) || null;
+        }
+
+        function expandTabsContainer(container) {
+          let current = container;
+
+          for (let i = 0; i < 4; i += 1) {
+            if (!current || !current.parentElement) break;
+            const rect = current.getBoundingClientRect();
+            const parentRect = current.parentElement.getBoundingClientRect();
+            const currentText = (current.textContent || "").replace(/\s+/g, " ").trim();
+            const parentText = (current.parentElement.textContent || "").replace(/\s+/g, " ").trim();
+            const parentHasTabs = parentText.includes("内容") && parentText.includes("媒体");
+            const closeInSize = Math.abs(parentRect.height - rect.height) < 48;
+            const nearTop = parentRect.top >= 0 && parentRect.top <= 220;
+
+            if (!parentHasTabs || !nearTop || !closeInSize) break;
+            if (parentText.length > currentText.length + 60) break;
+            current = current.parentElement;
+          }
+
+          return current;
+        }
+
         function findContentMediaTabs() {
-          const candidates = [...document.querySelectorAll("div, nav, section")].filter(el => {
-            if (el.getAttribute(TABS_MOVED_ATTR) === "true") return false;
+          const tabs = getTabLikeNodes();
+          if (tabs.length < 2) return null;
 
-            const text = (el.textContent || "").replace(/\s+/g, " ").trim();
-            if (!text.includes("内容") || !text.includes("媒体")) return false;
+          const container = getCommonAncestor(tabs);
+          if (!container) return null;
 
-            const rect = el.getBoundingClientRect();
-            if (rect.top < 0 || rect.top > 220) return false;
-            if (rect.height < 24 || rect.height > 100) return false;
-            if (rect.width < 120) return false;
+          const expanded = expandTabsContainer(container);
+          const rect = expanded.getBoundingClientRect();
+          if (rect.top < 0 || rect.top > 220 || rect.height > 120) return null;
 
-            const interactiveCount = el.querySelectorAll("button, a, [role='tab'], [role='button']").length;
-            return interactiveCount >= 2;
-          });
+          return expanded;
+        }
 
-          candidates.sort((a, b) => {
-            const rectA = a.getBoundingClientRect();
-            const rectB = b.getBoundingClientRect();
-            return rectA.height * rectA.width - rectB.height * rectB.width;
-          });
+        function neutralizeSecondaryTabsBar(container) {
+          if (!container) return;
 
-          return candidates[0] || null;
+          let current = container;
+          for (let i = 0; i < 4 && current; i += 1) {
+            const rect = current.getBoundingClientRect();
+            const text = (current.textContent || "").replace(/\s+/g, " ").trim();
+            const looksLikeBar = text.includes("内容") && text.includes("媒体") && rect.top >= 0 && rect.top <= 220;
+
+            if (looksLikeBar) {
+              current.style.position = "static";
+              current.style.top = "auto";
+              current.style.left = "auto";
+              current.style.right = "auto";
+              current.style.zIndex = "auto";
+              current.style.transform = "none";
+              current.style.width = "auto";
+              current.style.boxShadow = "none";
+              current.style.pointerEvents = "none";
+              current.style.visibility = "hidden";
+              current.style.height = "0";
+              current.style.minHeight = "0";
+              current.style.margin = "0";
+              current.style.padding = "0";
+              current.style.border = "0";
+              current.setAttribute(SECONDARY_BAR_ATTR, "hidden");
+              return;
+            }
+
+            current = current.parentElement;
+          }
         }
 
         function moveContentMediaTabs() {
@@ -323,19 +392,11 @@ layout: false
           tabs.style.position = "static";
           tabs.style.top = "auto";
           tabs.style.zIndex = "auto";
+          tabs.style.pointerEvents = "auto";
           tabs.setAttribute(TABS_MOVED_ATTR, "true");
+          tabs.setAttribute(TABS_SOURCE_ATTR, "moved");
           slot.prepend(tabs);
-
-          const overlays = getTopOverlays();
-          overlays.forEach(el => {
-            if (el === primary) return;
-            if (!el.contains(tabs) && el.textContent && el.textContent.includes("内容") && el.textContent.includes("媒体")) {
-              el.style.display = "none";
-              el.style.pointerEvents = "none";
-              el.style.visibility = "hidden";
-              el.setAttribute(SECONDARY_BAR_ATTR, "hidden");
-            }
-          });
+          neutralizeSecondaryTabsBar(tabs);
         }
 
         function applyGithubAvatar(profile) {
