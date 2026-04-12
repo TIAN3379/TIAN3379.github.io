@@ -105,6 +105,17 @@ layout: false
           return true;
         }
 
+        function isSecondaryRightOverlay(el) {
+          const rect = el.getBoundingClientRect();
+          const style = window.getComputedStyle(el);
+          if (style.display === "none" || style.visibility === "hidden") return false;
+          if (!["fixed", "sticky"].includes(style.position)) return false;
+          if (rect.top > 16 || rect.height < 32 || rect.height > 96) return false;
+          if (rect.left < window.innerWidth * 0.45) return false;
+          if (rect.width < 220 || rect.width > 900) return false;
+          return true;
+        }
+
         function findContentContainer(root, overlayBottom) {
           const direct = [...root.children];
           const directCandidate = direct.find(el => {
@@ -136,8 +147,14 @@ layout: false
           const root = document.getElementById("nc-root");
           if (!root) return;
 
-          const overlays = [...root.querySelectorAll("*")].filter(isTopOverlay);
+          const overlays = [...document.body.querySelectorAll("*")].filter(isTopOverlay);
           if (!overlays.length) return;
+
+          const rightOverlays = overlays.filter(isSecondaryRightOverlay);
+          rightOverlays.forEach(el => {
+            el.style.display = "none";
+            el.setAttribute("data-cms-secondary-overlay-hidden", "true");
+          });
 
           const overlayBottom = Math.max(...overlays.map(el => el.getBoundingClientRect().bottom));
           const offset = Math.ceil(overlayBottom + 12);
