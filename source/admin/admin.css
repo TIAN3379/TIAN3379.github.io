@@ -42,3 +42,16 @@ body {
   object-fit: cover;
   width: 100%;
 }
+
+#nc-root header.css-8zenuf-AppHeader-css {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: none !important;
+}
+
+#nc-root .css-y5bbau-AppHeaderContent.e1rbzf6g5 {
+  min-height: 48px !important;
+}

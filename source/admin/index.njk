@@ -491,9 +491,6 @@ layout: false
           const root = document.getElementById("nc-root");
           if (!root) return;
 
-          moveContentMediaTabs();
-          mergeSecondaryToolbar();
-
           const overlays = getTopOverlays().filter(el => el.getAttribute(SECONDARY_BAR_ATTR) !== "hidden");
           if (!overlays.length) return;
 
