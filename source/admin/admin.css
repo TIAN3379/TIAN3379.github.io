@@ -33,3 +33,12 @@ body {
 #nc-root img {
   border-radius: 14px;
 }
+
+#nc-root [data-github-avatar-img] {
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(12, 20, 23, 0.18);
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}

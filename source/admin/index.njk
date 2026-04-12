@@ -93,7 +93,12 @@ layout: false
     <script defer src="https://unpkg.com/decap-cms@^3.10.1/dist/decap-cms.js"></script>
     <script>
       (() => {
-        const OFFSET_ATTR = "data-cms-offset-applied";
+        const ROOT_OFFSET_ATTR = "data-cms-root-offset-applied";
+        const GITHUB_API_ROOT = "https://tian3379-decap-oauth.337953811.workers.dev/api/github";
+        const AVATAR_CACHE_KEY = "cms-github-avatar-url";
+        const LOGIN_CACHE_KEY = "cms-github-login";
+        const AVATAR_ATTR = "data-github-avatar-applied";
+        const AVATAR_IMG_ATTR = "data-github-avatar-img";
 
         function isTopOverlay(el) {
           const style = window.getComputedStyle(el);
@@ -105,31 +110,119 @@ layout: false
           return true;
         }
 
-        function findContentContainer(root, overlayBottom) {
-          const direct = [...root.children];
-          const directCandidate = direct.find(el => {
-            const rect = el.getBoundingClientRect();
-            const style = window.getComputedStyle(el);
-            return style.display !== "none" &&
-              !["fixed", "sticky"].includes(style.position) &&
-              rect.height > window.innerHeight * 0.55 &&
-              rect.width > window.innerWidth * 0.45;
-          });
-          if (directCandidate) return directCandidate;
+        function getStoredCmsUser() {
+          const candidateKeys = ["decap-cms-user", "netlify-cms-user"];
+          const storages = [window.localStorage, window.sessionStorage];
 
-          const all = [...root.querySelectorAll("*")];
-          const candidates = all.filter(el => {
-            const rect = el.getBoundingClientRect();
-            const style = window.getComputedStyle(el);
-            return style.display !== "none" &&
-              !["fixed", "sticky"].includes(style.position) &&
-              rect.top < overlayBottom + 12 &&
-              rect.height > window.innerHeight * 0.5 &&
-              rect.width > window.innerWidth * 0.45;
-          });
+          for (const storage of storages) {
+            for (const key of candidateKeys) {
+              try {
+                const value = storage.getItem(key);
+                if (!value) continue;
+                const parsed = JSON.parse(value);
+                if (parsed && typeof parsed === "object") return parsed;
+              } catch {}
+            }
+          }
 
-          candidates.sort((a, b) => b.getBoundingClientRect().height - a.getBoundingClientRect().height);
-          return candidates[0] || null;
+          return null;
+        }
+
+        function getGithubToken() {
+          const user = getStoredCmsUser();
+          if (!user || typeof user !== "object") return null;
+          return user.token || user.access_token || user.github_token || user.jwt || null;
+        }
+
+        async function getGithubProfile() {
+          const cachedAvatar = window.sessionStorage.getItem(AVATAR_CACHE_KEY);
+          const cachedLogin = window.sessionStorage.getItem(LOGIN_CACHE_KEY);
+
+          if (cachedAvatar) {
+            return { avatarUrl: cachedAvatar, login: cachedLogin || "GitHub" };
+          }
+
+          const token = getGithubToken();
+          if (!token) return null;
+
+          try {
+            const response = await fetch(`${GITHUB_API_ROOT}/user`, {
+              headers: {
+                Accept: "application/vnd.github+json",
+                Authorization: `token ${token}`
+              }
+            });
+
+            if (!response.ok) return null;
+
+            const user = await response.json();
+            if (!user || !user.avatar_url) return null;
+
+            window.sessionStorage.setItem(AVATAR_CACHE_KEY, user.avatar_url);
+            if (user.login) {
+              window.sessionStorage.setItem(LOGIN_CACHE_KEY, user.login);
+            }
+
+            return {
+              avatarUrl: user.avatar_url,
+              login: user.login || "GitHub"
+            };
+          } catch {
+            return null;
+          }
+        }
+
+        function findAvatarAnchors() {
+          const rightEdge = window.innerWidth;
+          return [...document.querySelectorAll("button, a, [role='button']")].filter(el => {
+            if (el.getAttribute(AVATAR_ATTR) === "true") return false;
+
+            const rect = el.getBoundingClientRect();
+            if (rect.top < -4 || rect.top > 180) return false;
+            if (rect.left < rightEdge - 320 || rect.right > rightEdge - 4) return false;
+            if (rect.width < 28 || rect.width > 64 || rect.height < 28 || rect.height > 64) return false;
+
+            const hasSvg = !!el.querySelector("svg");
+            const hasImg = !!el.querySelector("img");
+            const aria = (el.getAttribute("aria-label") || "").toLowerCase();
+            const text = (el.textContent || "").trim();
+            const looksLikeProfile = /avatar|profile|user|account/.test(aria) || (hasSvg && text.length <= 2);
+
+            return hasSvg || (hasImg && looksLikeProfile) || looksLikeProfile;
+          });
+        }
+
+        function applyGithubAvatar(profile) {
+          if (!profile || !profile.avatarUrl) return;
+
+          findAvatarAnchors().forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const img = document.createElement("img");
+            img.src = profile.avatarUrl;
+            img.alt = `${profile.login} avatar`;
+            img.referrerPolicy = "no-referrer";
+            img.setAttribute(AVATAR_IMG_ATTR, "true");
+
+            const existingSvg = el.querySelector("svg");
+            const existingImg = el.querySelector(`img[${AVATAR_IMG_ATTR}]`);
+            if (existingImg) return;
+
+            if (existingSvg) {
+              existingSvg.style.display = "none";
+            }
+
+            el.style.alignItems = "center";
+            el.style.borderRadius = "999px";
+            el.style.display = "inline-flex";
+            el.style.justifyContent = "center";
+            el.style.overflow = "hidden";
+            el.style.padding = "0";
+            el.style.width = `${Math.round(rect.width)}px`;
+            el.style.height = `${Math.round(rect.height)}px`;
+            el.setAttribute("title", profile.login);
+            el.setAttribute(AVATAR_ATTR, "true");
+            el.appendChild(img);
+          });
         }
 
         function applyCmsOffset() {
@@ -141,17 +234,19 @@ layout: false
 
           const overlayBottom = Math.max(...overlays.map(el => el.getBoundingClientRect().bottom));
           const offset = Math.ceil(overlayBottom + 12);
-          const container = findContentContainer(root, overlayBottom);
-          if (!container) return;
 
-          if (container.getAttribute(OFFSET_ATTR) !== String(offset)) {
-            container.style.paddingTop = `${offset}px`;
-            container.setAttribute(OFFSET_ATTR, String(offset));
+          if (root.getAttribute(ROOT_OFFSET_ATTR) !== String(offset)) {
+            root.style.paddingTop = `${offset}px`;
+            root.style.scrollPaddingTop = `${offset}px`;
+            root.setAttribute(ROOT_OFFSET_ATTR, String(offset));
           }
         }
 
         const observer = new MutationObserver(() => {
-          window.requestAnimationFrame(applyCmsOffset);
+          window.requestAnimationFrame(() => {
+            applyCmsOffset();
+            getGithubProfile().then(applyGithubAvatar);
+          });
         });
 
         window.addEventListener("load", () => {
@@ -159,9 +254,12 @@ layout: false
           if (!root) return;
           observer.observe(root, { childList: true, subtree: true, attributes: true });
           applyCmsOffset();
+          getGithubProfile().then(applyGithubAvatar);
           window.addEventListener("resize", applyCmsOffset, { passive: true });
           setTimeout(applyCmsOffset, 400);
           setTimeout(applyCmsOffset, 1200);
+          setTimeout(() => getGithubProfile().then(applyGithubAvatar), 800);
+          setTimeout(() => getGithubProfile().then(applyGithubAvatar), 1600);
         });
       })();
     </script>
