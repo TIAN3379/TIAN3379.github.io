@@ -1,0 +1,48 @@
+scheme: Muse
+
+darkmode: false
+
+menu:
+  home: / || fa fa-home
+  archives: /archives/ || fa fa-archive
+  categories: /categories/ || fa fa-th
+  tags: /tags/ || fa fa-tags
+  about: /about/ || fa fa-user
+
+footer:
+  since: 2026
+  icon:
+    animated: false
+
+post_meta:
+  item_text: true
+  created_at: true
+  updated_at: true
+  categories: true
+
+symbols_count_time:
+  separated_meta: true
+  item_text_total: false
+  item_text_post: false
+
+toc:
+  enable: true
+  number: true
+  wrap: false
+
+codeblock:
+  copy_button: true
+  fold: false
+
+back2top:
+  enable: true
+  sidebar: true
+  scrollpercent: true
+
+reading_progress:
+  enable: true
+
+local_search:
+  enable: true
+
+highlight_theme: night eighties
