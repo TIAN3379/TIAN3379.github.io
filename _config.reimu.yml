@@ -130,7 +130,7 @@ internal_theme:
     --red-6: rgba(255, 243, 243, 0.2)
     --highlight-foreground: "#c9d1d9"
     --highlight-addition-bg: "#04260f"
-custom_avatar: /images/uploads/site/微信图片_20260411225246_53_2.jpg
+custom_avatar: /images/uploads/site/red.jpg
 firework:
   enable: true
   disable_on_mobile: false
