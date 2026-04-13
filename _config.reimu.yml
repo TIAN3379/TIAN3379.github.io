@@ -60,6 +60,7 @@ favicon: "/images/favicon.ico" # which means themes/reimu/source/images/favicon.
 # favicon: "https://example.com"
 
 avatar: "avatar.webp" # which means source/_data/avatar/avatar.webp
+custom_avatar: "" # set this to a direct path like /images/uploads/site/avatar.webp to override the default avatar folder
 
 # Control the display of the post cover
 # If not set, the banner image will be displayed by default
