@@ -33,6 +33,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare Hexo database file
+        run: |
+          if [ ! -f db.json ]; then
+            echo "{}" > db.json
+          fi
+
       - name: Build site
         run: |
           npx hexo clean
