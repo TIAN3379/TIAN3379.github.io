@@ -1,5 +1,7 @@
 (function () {
   var CONFIG_CACHE_KEY = "reimu-theme-config-main";
+  var currentAvatarPath = "";
+  var avatarObserver = null;
 
   function getRepoConfigUrl() {
     return "https://raw.githubusercontent.com/TIAN3379/TIAN3379.github.io/main/_config.reimu.yml";
@@ -23,6 +25,7 @@
 
   function applyAvatar(avatarPath) {
     if (!avatarPath) return;
+    currentAvatarPath = avatarPath;
 
     var nodes = document.querySelectorAll('.sidebar-author img[data-src], .sidebar-author img[src]');
     if (!nodes.length) return;
@@ -31,6 +34,27 @@
       node.setAttribute("data-src", avatarPath);
       node.setAttribute("src", avatarPath);
       node.removeAttribute("srcset");
+      node.removeAttribute("data-srcset");
+      node.classList.remove("lazyload", "lazyloading");
+      node.classList.add("lazyloaded");
+      node.loading = "eager";
+    });
+  }
+
+  function watchAvatarNodes() {
+    if (avatarObserver || !window.MutationObserver) return;
+
+    avatarObserver = new MutationObserver(function () {
+      if (currentAvatarPath) {
+        applyAvatar(currentAvatarPath);
+      }
+    });
+
+    avatarObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["src", "data-src", "class"]
     });
   }
 
@@ -108,10 +132,12 @@
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
+      watchAvatarNodes();
       syncAvatarFromConfig();
       mountEntry();
     });
   } else {
+    watchAvatarNodes();
     syncAvatarFromConfig();
     mountEntry();
   }
