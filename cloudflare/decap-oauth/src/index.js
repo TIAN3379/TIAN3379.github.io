@@ -96,6 +96,42 @@ function popupPage(script) {
 </html>`;
 }
 
+function callbackScript({ message, payload, isError = false }) {
+  const payloadLiteral = JSON.stringify(payload);
+  const messageLiteral = JSON.stringify(message);
+
+  return `
+    const payload = ${payloadLiteral};
+    const isError = ${isError ? "true" : "false"};
+    const openerRef = window.opener;
+    let finished = false;
+
+    document.getElementById("message").textContent = ${messageLiteral};
+
+    function complete(targetOrigin = "*") {
+      if (!openerRef || finished) return;
+      finished = true;
+      openerRef.postMessage(payload, targetOrigin);
+      setTimeout(() => window.close(), 60);
+    }
+
+    if (openerRef) {
+      try {
+        openerRef.postMessage("authorizing:github", "*");
+      } catch (error) {
+        complete("*");
+      }
+
+      window.addEventListener("message", event => {
+        complete(event.origin || "*");
+      }, { once: true });
+
+      // Fallback for browsers / CMS versions that do not answer the handshake.
+      setTimeout(() => complete("*"), isError ? 150 : 400);
+    }
+  `;
+}
+
 async function exchangeCodeForToken({ code, redirectUri, env }) {
   const response = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
@@ -191,16 +227,13 @@ export default {
 
       if (!code || !receivedState || !expectedState || expectedState !== receivedState) {
         return html(
-          popupPage(`
-            document.getElementById("message").textContent = "OAuth state validation failed.";
-            if (window.opener) {
-              window.opener.postMessage("authorizing:github", "*");
-              window.addEventListener("message", event => {
-                window.opener.postMessage("authorization:github:error:State validation failed", event.origin);
-                window.close();
-              }, { once: true });
-            }
-          `),
+          popupPage(
+            callbackScript({
+              message: "OAuth state validation failed.",
+              payload: "authorization:github:error:State validation failed",
+              isError: true
+            })
+          ),
           { status: 400 }
         );
       }
@@ -214,17 +247,12 @@ export default {
 
         const payload = JSON.stringify({ token, provider: "github" });
         return html(
-          popupPage(`
-            const payload = ${JSON.stringify(`authorization:github:success:${payload}`)};
-            document.getElementById("message").textContent = "Authenticated. Returning to CMS...";
-            if (window.opener) {
-              window.opener.postMessage("authorizing:github", "*");
-              window.addEventListener("message", event => {
-                window.opener.postMessage(payload, event.origin);
-                window.close();
-              }, { once: true });
-            }
-          `),
+          popupPage(
+            callbackScript({
+              message: "Authenticated. Returning to CMS...",
+              payload: `authorization:github:success:${payload}`
+            })
+          ),
           {
             headers: {
               "set-cookie": "decap_oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"
@@ -234,16 +262,13 @@ export default {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown OAuth error";
         return html(
-          popupPage(`
-            document.getElementById("message").textContent = ${JSON.stringify(message)};
-            if (window.opener) {
-              window.opener.postMessage("authorizing:github", "*");
-              window.addEventListener("message", event => {
-                window.opener.postMessage(${JSON.stringify(`authorization:github:error:${message}`)}, event.origin);
-                window.close();
-              }, { once: true });
-            }
-          `),
+          popupPage(
+            callbackScript({
+              message,
+              payload: `authorization:github:error:${message}`,
+              isError: true
+            })
+          ),
           { status: 500 }
         );
       }
