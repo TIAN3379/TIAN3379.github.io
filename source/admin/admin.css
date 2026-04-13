@@ -1,0 +1,166 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+:root {
+  --admin-red-0: #ff0000;
+  --admin-red-1: #ff5252;
+  --admin-red-4: #ffd0d0;
+  --admin-red-6: #fff7f7;
+  --admin-ink: #22353b;
+  --admin-muted: #587077;
+  --admin-line: rgba(34, 53, 59, 0.1);
+  --admin-card: rgba(255, 255, 255, 0.74);
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(255, 124, 124, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(255, 208, 208, 0.36), transparent 22%),
+    linear-gradient(180deg, #eef3f1 0%, #e7efec 100%);
+  color: var(--admin-ink);
+  font-family: "Mulish", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+body::before {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.42), transparent 45%),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(34, 53, 59, 0.018) 38px 39px);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+}
+
+.admin-shell {
+  margin: 0 auto;
+  max-width: 1440px;
+  min-height: 100%;
+  padding: 24px;
+  position: relative;
+}
+
+.admin-header {
+  align-items: end;
+  backdrop-filter: blur(16px);
+  background: var(--admin-card);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 24px;
+  box-shadow: 0 16px 48px rgba(34, 53, 59, 0.08);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 22px 24px;
+}
+
+.admin-kicker {
+  color: var(--admin-red-1);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.admin-header h1 {
+  font-family: "Noto Serif SC", "Source Han Serif SC", serif;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.admin-copy {
+  color: var(--admin-muted);
+  font-size: 14px;
+  margin: 10px 0 0;
+  max-width: 720px;
+}
+
+.admin-links {
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.admin-links a {
+  background: var(--admin-red-6);
+  border: 1px solid rgba(255, 82, 82, 0.18);
+  border-radius: 999px;
+  color: var(--admin-ink);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 14px;
+  text-decoration: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.admin-links a:hover {
+  background: #fff;
+  border-color: rgba(255, 82, 82, 0.34);
+  transform: translateY(-1px);
+}
+
+.admin-main {
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 28px;
+  box-shadow: 0 18px 58px rgba(34, 53, 59, 0.08);
+  overflow: hidden;
+}
+
+#nc-root {
+  min-height: calc(100vh - 182px);
+}
+
+#nc-root * {
+  font-family: "Mulish", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+#nc-root button,
+#nc-root input,
+#nc-root select,
+#nc-root textarea {
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+#nc-root img {
+  border-radius: 16px;
+}
+
+#nc-root a {
+  text-decoration: none;
+}
+
+#nc-root [data-slate-editor="true"] {
+  font-family: "Noto Serif SC", "Source Han Serif SC", serif;
+}
+
+#nc-root aside,
+#nc-root nav,
+#nc-root header {
+  box-shadow: none !important;
+}
+
+@media (max-width: 900px) {
+  .admin-shell {
+    padding: 14px;
+  }
+
+  .admin-header {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .admin-links {
+    flex-wrap: wrap;
+  }
+
+  #nc-root {
+    min-height: calc(100vh - 230px);
+  }
+}

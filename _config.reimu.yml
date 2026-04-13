@@ -18,6 +18,9 @@ menu:
   - name: links
     url: /friend
     icon:
+  - name: write
+    url: /admin/
+    icon:
 
 subtitle:
   typing:

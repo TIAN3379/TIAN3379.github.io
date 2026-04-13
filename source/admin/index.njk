@@ -1,0 +1,93 @@
+---
+layout: false
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>TIAN3379 Blog Admin</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+    <script defer src="https://unpkg.com/decap-cms@^3.10.1/dist/decap-cms.js"></script>
+    <script>
+      (() => {
+        const SELECTORS = [
+          "header",
+          "nav",
+          "[class*='AppHeader']",
+          "[class*='Toolbar']",
+          "[class*='CollectionTop']",
+          "[class*='EditorToolbar']"
+        ];
+
+        function normalizeToolbar(el) {
+          el.style.position = "static";
+          el.style.top = "auto";
+          el.style.left = "auto";
+          el.style.right = "auto";
+          el.style.bottom = "auto";
+          el.style.zIndex = "auto";
+          el.style.transform = "none";
+          el.style.boxShadow = "none";
+          el.style.width = "auto";
+          el.style.maxWidth = "none";
+        }
+
+        function fixCmsLayout() {
+          const root = document.getElementById("nc-root");
+          if (!root) return;
+
+          root.style.paddingTop = "0";
+          root.style.scrollPaddingTop = "0";
+
+          const candidates = [...new Set(
+            SELECTORS.flatMap(selector => [...root.querySelectorAll(selector)])
+          )];
+
+          candidates.forEach(el => {
+            const style = window.getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            if (!["fixed", "sticky"].includes(style.position)) return;
+            if (rect.top > 180 || rect.height < 28 || rect.height > 120) return;
+            if (rect.width < window.innerWidth * 0.25) return;
+            normalizeToolbar(el);
+          });
+        }
+
+        const observer = new MutationObserver(() => {
+          window.requestAnimationFrame(fixCmsLayout);
+        });
+
+        window.addEventListener("load", () => {
+          const root = document.getElementById("nc-root");
+          if (!root) return;
+          observer.observe(root, { childList: true, subtree: true, attributes: true });
+          fixCmsLayout();
+          window.addEventListener("resize", fixCmsLayout, { passive: true });
+          setTimeout(fixCmsLayout, 300);
+          setTimeout(fixCmsLayout, 1200);
+          setTimeout(fixCmsLayout, 2400);
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="admin-shell">
+      <header class="admin-header">
+        <div>
+          <p class="admin-kicker">TIAN3379 Blog</p>
+          <h1>Write And Publish</h1>
+          <p class="admin-copy">在浏览器里写 Markdown，发布后会自动提交到 GitHub 并触发博客更新。</p>
+        </div>
+        <nav class="admin-links">
+          <a href="/" target="_blank" rel="noreferrer">View Site</a>
+          <a href="https://github.com/TIAN3379/TIAN3379.github.io" target="_blank" rel="noreferrer">Repository</a>
+        </nav>
+      </header>
+      <main class="admin-main">
+        <div id="nc-root"></div>
+      </main>
+    </div>
+  </body>
+</html>
