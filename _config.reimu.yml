@@ -18,7 +18,7 @@ menu:
   - name: links
     url: /friend
     icon:
-  - name: write
+  - name: 写作后台
     url: /admin/
     icon:
 
@@ -623,8 +623,10 @@ share:
 injector:
   head_begin: # Inject code snippet right after <head>
   head_end: # Inject code snippet right before </head>
+    - <link rel="stylesheet" href="/css/home-admin-entry.css">
   body_begin: # Inject code snippet right after <body>
   body_end: # Inject code snippet right before </body>
+    - <script defer src="/js/home-admin-entry.js"></script>
   sidebar_begin: # Inject code snippet right after <aside>
   sidebar_end: # Inject code snippet right before </aside>
 

@@ -1,0 +1,68 @@
+.home-admin-entry {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-admin-entry__button,
+.home-admin-entry__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.8rem 1.35rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.home-admin-entry__button {
+  color: #fff;
+  background: linear-gradient(135deg, var(--red-1), var(--red-2));
+  box-shadow: 0 12px 30px rgba(255, 82, 82, 0.28);
+}
+
+.home-admin-entry__secondary {
+  color: var(--red-1);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 82, 82, 0.18);
+}
+
+.home-admin-entry__button:hover,
+.home-admin-entry__secondary:hover {
+  transform: translateY(-2px);
+}
+
+.home-admin-entry__button:hover {
+  box-shadow: 0 16px 34px rgba(255, 82, 82, 0.34);
+}
+
+.home-admin-entry__hint {
+  width: 100%;
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.88);
+  text-align: center;
+}
+
+html[data-theme="dark"] .home-admin-entry__secondary,
+[data-theme-mode="dark"] .home-admin-entry__secondary {
+  background: rgba(28, 28, 30, 0.72);
+  color: #ffd9d9;
+  border-color: rgba(255, 208, 208, 0.2);
+}
+
+@media (max-width: 767px) {
+  .home-admin-entry {
+    flex-direction: column;
+  }
+
+  .home-admin-entry__button,
+  .home-admin-entry__secondary {
+    width: min(100%, 20rem);
+  }
+}
