@@ -1,4 +1,63 @@
 (function () {
+  var CONFIG_CACHE_KEY = "reimu-theme-config-main";
+
+  function getRepoConfigUrl() {
+    return "https://raw.githubusercontent.com/TIAN3379/TIAN3379.github.io/main/_config.reimu.yml";
+  }
+
+  function parseCustomAvatar(configText) {
+    var match = configText.match(/^\s*custom_avatar:\s*(.+)\s*$/m);
+    if (!match) return "";
+
+    var value = match[1].trim();
+    if (!value || value === '""' || value === "''" || value === "null") {
+      return "";
+    }
+
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+
+    return value;
+  }
+
+  function applyAvatar(avatarPath) {
+    if (!avatarPath) return;
+
+    var nodes = document.querySelectorAll('.sidebar-author img[data-src], .sidebar-author img[src]');
+    if (!nodes.length) return;
+
+    nodes.forEach(function (node) {
+      node.setAttribute("data-src", avatarPath);
+      node.setAttribute("src", avatarPath);
+      node.removeAttribute("srcset");
+    });
+  }
+
+  function syncAvatarFromConfig() {
+    var cached = window.sessionStorage && sessionStorage.getItem(CONFIG_CACHE_KEY);
+    if (cached) {
+      applyAvatar(parseCustomAvatar(cached));
+    }
+
+    fetch(getRepoConfigUrl(), { cache: "no-store" })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("Failed to fetch theme config");
+        }
+        return response.text();
+      })
+      .then(function (text) {
+        if (window.sessionStorage) {
+          sessionStorage.setItem(CONFIG_CACHE_KEY, text);
+        }
+        applyAvatar(parseCustomAvatar(text));
+      })
+      .catch(function () {
+        // Keep the current avatar when config fetch fails.
+      });
+  }
+
   function isHomePage() {
     var path = window.location.pathname;
     return path === "/" || path === "/index.html";
@@ -48,8 +107,12 @@
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mountEntry);
+    document.addEventListener("DOMContentLoaded", function () {
+      syncAvatarFromConfig();
+      mountEntry();
+    });
   } else {
+    syncAvatarFromConfig();
     mountEntry();
   }
 })();
